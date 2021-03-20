@@ -1,5 +1,5 @@
-# Computational Methods For Data Analysis <br /> (UW AMATH582) 
-DFT & Fouruer series CODE EXAMPLES
+# DFT & Fourier series CODE EXAMPLES
+
 
 ### Prerequisites
 

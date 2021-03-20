@@ -1,5 +1,5 @@
-# Computational Methods For Data Analysis <br /> (UW AMATH582) 
-APPLIED & COMPUTATIONAL MATH CODE EXAMPLES
+# APPLIED & COMPUTATIONAL MATH CODE EXAMPLES 
+
 
 ### Prerequisites
 

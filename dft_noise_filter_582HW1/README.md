@@ -1,5 +1,9 @@
 # Discrete Fourier Transform Noise Filter 
 
+Read the complete description in the included 
+[writeup:](https://github.com/aruymgaart/AMATH/dft_noise_filter_582HW1/ruymgaart_AMATH582_DFT_noise_filter.pdf)
+
+
 
 ## How to use
 python3 dftFilter.py

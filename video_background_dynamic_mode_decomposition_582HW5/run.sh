@@ -1,0 +1,2 @@
+python3 subtractLRvideo.py movie=data/monte_carlo.npz dt=1.0 modes=2 type=npz framestart=0 framestop=51 plotframes=1,17,34,49 outname=images/MC_race inv=False thresh=0.2
+python3 subtractLRvideo.py movie=data/ski_drop_c.npz dt=0.03 modes=8 type=npz framestart=0 framestop=151 plotframes=5,50,100,145 outname=images/ski inv=False thresh=0.2

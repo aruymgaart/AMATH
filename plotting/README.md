@@ -1,5 +1,5 @@
-# Computational Methods For Data Analysis <br /> (UW AMATH582) 
-PLOTTING FUNCTIONS FOR APPLIED MATH
+# PLOTTING FUNCTIONS FOR APPLIED MATH 
+
 
 ### Prerequisites
 

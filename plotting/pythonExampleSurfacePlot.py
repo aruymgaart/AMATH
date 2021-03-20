@@ -1,3 +1,4 @@
+# AP Ruymgaart
 import numpy as np
 from numpy import sin, cos, pi
 from skimage import measure

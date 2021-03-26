@@ -1,5 +1,5 @@
 # Autoregression Methods 
-Test AR methods and observe their limitations
+Test AR methods and observe their capabilities & limitations
 
 ## How to use
 run  <br>

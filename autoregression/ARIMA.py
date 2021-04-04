@@ -12,6 +12,13 @@ This will also do special cases
     * integration models: ARIMA(p, d, q)
     * seasonal models: SARIMA(P, D, Q, s)
     * regression with errors that follow one of the above ARIMA-type models
+
+parameters
+	The (p,d,q) order of the model for the autoregressive, differences, and moving average components. 
+	d is always an integer, while p and q may either be integers or lists of integers.
+
+	The (P,D,Q,s) order of the seasonal component of the model for the AR parameters, differences, MA parameters, and periodicity. 
+	Default is (0, 0, 0, 0). D and s are always integers, while P and Q may either be integers or lists of positive integers
 '''
 
 series = 4

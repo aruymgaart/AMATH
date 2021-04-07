@@ -2,6 +2,7 @@
 # https://www.statsmodels.org/stable/examples/notebooks/generated/autoregressions.html
 import statsmodels as sm
 from statsmodels.tsa.arima_model import ARIMA
+from statsmodels.tsa.stattools import acf
 import matplotlib.pyplot as plt
 from tensorFiles import *
 '''
@@ -24,10 +25,21 @@ parameters
 series = 4
 order1,order2,order3 = 1,0,0
 trainEnd = 70
+plotACFs = False
 
 data = tnsrFile2numpy('data.npz')
 snames = ['$\\cos(x)$', '$e^{-ax}$', '$e^{ax}$', '$a_1x^5 + a_2x^4 + a_3x^3 + a_4x^2 + a_5 x $', '$\\frac{ 1 - e^{-(p+q)t}  }{  1 + (p/q)e^{-(p+q)t}  }$', '$\\sqrt{x}$']
 datT = data[:,0:trainEnd]
+
+if plotACFs:
+	for s in range(len(data)):
+		vacf = acf(datT[s])
+		plt.plot(vacf, label=snames[s])
+	plt.title("Autocorrelation function ACF")
+	plt.legend()
+	plt.savefig('ACF.png', dpi=200, bbox_inches='tight')
+	exit()
+
 
 mod = ARIMA(datT[series], order=(order1, order2, order3))
 res = mod.fit()

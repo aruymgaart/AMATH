@@ -36,7 +36,7 @@ plt.show()
 
 # now turn into stochastic processes by adding noise
 rndn = np.random.normal
-am = [0.2,0.2,0.2,0.2,0.2,0.2]
+am = [0.2,0.2,0.2,0.2,0.2,0.2,0.2,0.2]
 dataN = copy.copy(data)
 for k in range(len(dataN)): dataN[k] += rndn(0,am[k],[len(X)])
 numpy2tnsrFile(np.array(dataN), 'dataN.npz')

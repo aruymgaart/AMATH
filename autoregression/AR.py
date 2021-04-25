@@ -9,7 +9,7 @@ ARorder = 2
 trainEnd = 70
 
 data = tnsrFile2numpy('data.npz')
-snames = ['$\\cos(x)$', '$e^{-ax}$', '$e^{ax}$', '$a_1x^5 + a_2x^4 + a_3x^3 + a_4x^2 + a_5 x $', '$\\frac{ 1 - e^{-(p+q)t}  }{  1 + (p/q)e^{-(p+q)t}  }$', '$\\sqrt{x}$']
+snames = ['$\\cos(x)$', '$e^{-ax}$', '$e^{ax}$', '$a_1x^5 + a_2x^4 + a_3x^3 + a_4x^2 + a_5 x $', '$\\frac{ 1 - e^{-(p+q)t}  }{  1 + (p/q)e^{-(p+q)t}  }$', '$\\sqrt{x}$', '$ax$', '$0$', '$x^2$']
 datT = data[:,0:trainEnd] # training data (AR fit)
 
 print('===================  AR(',ARorder,') ===================')

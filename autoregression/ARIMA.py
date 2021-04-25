@@ -29,6 +29,7 @@ trainEnd = 70
 plotACFs = False
 
 data = tnsrFile2numpy('dataN.npz')
+dataTrends = tnsrFile2numpy('data.npz')
 snames = ['$\\cos(x)$', '$e^{-ax}$', '$e^{ax}$', '$a_1x^5 + a_2x^4 + a_3x^3 + a_4x^2 + a_5 x $', '$\\frac{ 1 - e^{-(p+q)t}  }{  1 + (p/q)e^{-(p+q)t}  }$', '$\\sqrt{x}$', '$ax$', '$0$', '$x^2$']
 datT = data[:,0:trainEnd]
 
@@ -53,7 +54,10 @@ p = mod.predict(res.params, end=100)
 plt.title('ARIMA prediction (right of red line=predicted, left=training)')
 plt.plot(p, label='ARIMA, order=(%d,%d,%d) predicted' % (order1, order2, order3))
 plt.plot(data[series], label='True (%s)' % (snames[series]))
-if not differenced is None: plt.plot(differenced, label='Differenced')
+plt.plot(dataTrends[series], label='True (%s) trend (denoised)' % (snames[series]))
+if not differenced is None: 
+	plt.plot(differenced, label='Differenced')
+	plt.plot(data[series]-dataTrends[series], label='Random component' )
 plt.axvline(trainEnd,c='r')
 plt.legend()
 plt.savefig('images/ARIMA_%d-%d-%d_%d_%d.png' % (order1, order2, order3, series, trainEnd), dpi=200, bbox_inches='tight')

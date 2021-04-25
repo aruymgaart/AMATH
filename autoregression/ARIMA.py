@@ -2,6 +2,7 @@
 # https://www.statsmodels.org/stable/examples/notebooks/generated/autoregressions.html
 import statsmodels as sm
 from statsmodels.tsa.arima_model import ARIMA
+from statsmodels.tsa.statespace.tools import diff
 from statsmodels.tsa.stattools import acf
 import matplotlib.pyplot as plt
 from tensorFiles import *
@@ -22,13 +23,13 @@ parameters
 	Default is (0, 0, 0, 0). D and s are always integers, while P and Q may either be integers or lists of positive integers
 '''
 
-series = 4
-order1,order2,order3 = 1,0,0
+series = 8 # dataN[8] is x^2  so should have I=2 to make stationary
+order1,order2,order3 = 0,2,0
 trainEnd = 70
 plotACFs = False
 
-data = tnsrFile2numpy('data.npz')
-snames = ['$\\cos(x)$', '$e^{-ax}$', '$e^{ax}$', '$a_1x^5 + a_2x^4 + a_3x^3 + a_4x^2 + a_5 x $', '$\\frac{ 1 - e^{-(p+q)t}  }{  1 + (p/q)e^{-(p+q)t}  }$', '$\\sqrt{x}$']
+data = tnsrFile2numpy('dataN.npz')
+snames = ['$\\cos(x)$', '$e^{-ax}$', '$e^{ax}$', '$a_1x^5 + a_2x^4 + a_3x^3 + a_4x^2 + a_5 x $', '$\\frac{ 1 - e^{-(p+q)t}  }{  1 + (p/q)e^{-(p+q)t}  }$', '$\\sqrt{x}$', '$ax$', '$0$', '$x^2$']
 datT = data[:,0:trainEnd]
 
 if plotACFs:
@@ -40,6 +41,9 @@ if plotACFs:
 	plt.savefig('ACF.png', dpi=200, bbox_inches='tight')
 	exit()
 
+differenced = None
+if order2 > 0:
+	differenced = diff(data[series], k_diff=2)
 
 mod = ARIMA(datT[series], order=(order1, order2, order3))
 res = mod.fit()
@@ -49,6 +53,7 @@ p = mod.predict(res.params, end=100)
 plt.title('ARIMA prediction (right of red line=predicted, left=training)')
 plt.plot(p, label='ARIMA, order=(%d,%d,%d) predicted' % (order1, order2, order3))
 plt.plot(data[series], label='True (%s)' % (snames[series]))
+if not differenced is None: plt.plot(differenced, label='Differenced')
 plt.axvline(trainEnd,c='r')
 plt.legend()
 plt.savefig('images/ARIMA_%d-%d-%d_%d_%d.png' % (order1, order2, order3, series, trainEnd), dpi=200, bbox_inches='tight')

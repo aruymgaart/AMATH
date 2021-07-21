@@ -3,6 +3,7 @@
 import random as rnd, numpy as np
 abs, rndm, exp = np.abs, np.random.normal, np.exp
 from statsmodels.tsa.stattools import acf
+import statsmodels.api as sm
 import matplotlib.pyplot as plt
 
 
@@ -15,14 +16,21 @@ rn = rndm(0,noise,[n])
 
 #=== ARMA(0,0) ===
 # just noise 
+if False:
+	ACF = acf(rn)
 
-ACF = acf(rn)
-
-plt.bar(np.arange(len(ACF)), ACF)
-plt.title('ARMA(0,0)')
-plt.ylabel('Autocorrelation')
-plt.xlabel('Lag')
-plt.show()
+	plt.bar(np.arange(len(ACF)), ACF)
+	plt.title('ARMA(0,0)')
+	plt.ylabel('Autocorrelation')
+	plt.xlabel('Lag')
+	plt.show()
+else:
+	fig, ax = plt.subplots(2,1)
+	fig = sm.graphics.tsa.plot_acf(rn, lags=30, ax=ax[0])
+	fig = sm.graphics.tsa.plot_pacf(rn, lags=30, ax=ax[1])
+	#plt.title('ARMA(0,0) White noise ACF, PACF')
+	ax[1].set_xlabel('Lag')
+	plt.show()
 
 
 #=== ARMA(1,0) ===
@@ -46,7 +54,4 @@ plt.title('ARMA(1,0)')
 plt.ylabel('Autocorrelation')
 plt.xlabel('Lag')
 plt.show()
-
-
-	
 

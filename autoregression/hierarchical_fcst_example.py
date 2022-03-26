@@ -18,13 +18,20 @@ see https://otexts.com/fpp2/reconciliation.html#reconciliation
 
 in  this example  (like in MinT slides)
 3 base forecasts, 1 summed frecast
-    S = (4x3) 
+    n = nr base forecasts (3)
+    m = nr total forecasts (4)
+    k = m-n (1)
+    S = (mxn) = (4x3) 
     Sb = (4x3)x(3x1) = (4x1)
     y,yh = (4x1)
     G = (3x4)
     W = (4x4)
     (S' W^-1 S)^-1 S' W^-1 = ( (3x4)x(4x4)
     Pr = SG = (4x3)x(3x4) = (4x4)
+    S' = [C' I_n]
+    U' = [I_k -C] = (k)x(m)
+    J = [0_nxk I_n] = (n)x(m)
+    here C = [1 1 1] = (k)x(n)
 '''
 
 def getSales(df, store, dept):
@@ -32,12 +39,47 @@ def getSales(df, store, dept):
     df1 = df1[df1['Dept'] == dept]
     return df1['Weekly_Sales'].to_numpy()
 
-def reconciliationMatrix(S,W):
-    iW = np.linalg.inv(W)
-    StWiS = mx(S.T,  mx(iW,S))
-    StWiS_inv = np.linalg.inv(StWiS)
-    StWi = mx(S.T, iW)
-    return mx(StWiS_inv, StWi) 
+'''
+reconciliation matrix
+    (S' W^-1 S)^-1 S' W^-1
+or equivalently (eqn. 10)
+    J - JWU(U'WU)^-1U'
+and the latter with pseudoinverse:
+    J - JSVS'U(U'SVS'U)^-1U'
+'''
+def reconciliationMatrix(S,W, pseudoinverse=True):
+    n = S.shape[1]
+    m = S.shape[0]
+    k = m - n
+    if pseudoinverse:
+        #print('S',S)
+        C = S[0:k,:] 
+        #print('C', C, C.shape)
+        J = np.zeros((n,m))
+        for i in range(n): J[i,i+k] = 1
+        U = np.zeros((m,k))
+        for i in range(k): U[i,i] = 1
+        U[k:m,:] = -1.0*C.T
+        WU = mx(W,U)
+        UtWU = mx(U.T, WU)
+        UtWU_i = np.linalg.inv(UtWU)
+        R0 = mx(UtWU_i, U.T)
+        R1 = mx(WU, R0)
+        #print('J',J,'WU',WU, UtWU_i)
+        return J - mx(J, R1)
+    else:
+        iW = np.linalg.inv(W)
+        StWiS = mx(S.T,  mx(iW,S))
+        StWiS_inv = np.linalg.inv(StWiS)
+        StWi = mx(S.T, iW)
+        return mx(StWiS_inv, StWi) 
+
+def tail(s, nTail):
+    return s[len(s)-nTail:len(s)]
+
+def head(s, nTail):
+    return s[0:len(s)-nTail]
+
 
 
 if __name__ == '__main__':
@@ -45,8 +87,12 @@ if __name__ == '__main__':
         S = np.array([ [1,1],[1,0],[0,1] ])
         W = np.eye(3)
         G = reconciliationMatrix(S,W)
-        print('reconciliationMatrix', G)
-        print('projector', mx(S,G))
+        print('reconciliationMatrix:\n', G)
+        print('projector:\n', mx(S,G))
+        print('---- not using pseudoinverse ----')
+        G = reconciliationMatrix(S,W, pseudoinverse=False)
+        print('reconciliationMatrix:\n', G)
+        print('projector:\n', mx(S,G))
         exit()
 
     df = pd.read_csv('walmart_sample_data/train.csv')
@@ -56,27 +102,30 @@ if __name__ == '__main__':
     curve_ttl = curve_1 + curve_2 + curve_3
     Nd = len(curve_1)
     nPred = 26
-    W_option = 2
-    cheat = True
+    W_option = 3
+    cheat = False
 
     #---- sum matrix S ----
     # there are 3 base forecasts
     S = np.array([[1,1,1],[1,0,0],[0,1,0],[0,0,1]])
+    #print(S)
+    #print(S.T)
+    #exit()
 
     #---- forecast fits ----
-    mod_1 = SARIMAX(curve_1[0:Nd-nPred], order=(0,0,0), seasonal_order=(1,1,1,52))
+    mod_1 = SARIMAX(head(curve_1,nPred), order=(0,0,0), seasonal_order=(1,1,1,52))
     res_1 = mod_1.fit()
     residual_1, fit_1 = res_1.resid, res_1.fittedvalues
 
-    mod_2 = SARIMAX(curve_2[0:Nd-nPred], order=(0,1,0), seasonal_order=(1,1,1,52))
+    mod_2 = SARIMAX(head(curve_2,nPred), order=(0,1,0), seasonal_order=(1,1,1,52))
     res_2 = mod_2.fit()
     residual_2, fit_2 = res_2.resid, res_2.fittedvalues
 
-    mod_3 = SARIMAX(curve_3[0:Nd-nPred], order=(0,1,0), seasonal_order=(1,1,1,52))
+    mod_3 = SARIMAX(head(curve_3,nPred), order=(0,1,0), seasonal_order=(1,1,1,52))
     res_3 = mod_3.fit()
     residual_3, fit_3 = res_3.resid, res_3.fittedvalues
 
-    mod_sum = SARIMAX(curve_ttl[0:Nd-nPred], order=(0,0,0), seasonal_order=(1,1,1,52))
+    mod_sum = SARIMAX(head(curve_ttl,nPred), order=(0,0,0), seasonal_order=(1,1,1,52))
     res_sum = mod_sum.fit()
     residual_sum, fit_sum = res_sum.resid, res_sum.fittedvalues
 
@@ -99,25 +148,26 @@ if __name__ == '__main__':
 
 
     if cheat: #- "cheat with know true curves"
-        r1 = pred_1 - curve_1[Nd-nPred-1:-1]
-        r2 = pred_2 - curve_2[Nd-nPred-1:-1]
-        r3 = pred_3 - curve_3[Nd-nPred-1:-1]
-        r4 = pred_sum - curve_ttl[Nd-nPred-1:-1]
+        r1 = pred_1 - tail(curve_1, nPred)
+        r2 = pred_2 - tail(curve_2, nPred)
+        r3 = pred_3 - tail(curve_3, nPred)
+        r4 = pred_sum - tail(curve_ttl, nPred)
         A = np.array([r4,r1,r2,r3])
     else: 
         A = np.array([residual_sum[55:-1],residual_1[55:-1],residual_2[55:-1],residual_3[55:-1]])
 
     if W_option == 1:
-        Cv = np.eye(4)*2
+        Cv = np.eye(4)*1.0
     elif W_option == 2:
         Cov = np.cov(A)
         Cv = np.zeros(Cov.shape)
         for k in range(4): Cv[k,k] = Cov[k,k]*1.0
     else:
          Cv = np.cov(A)
+    print('Cov matrix condition number (large means near singular and pseudoinverse should be used)', np.linalg.cond(Cv))
    
-    G = reconciliationMatrix(S,Cv)
-    P = mx(S,G)    #- projector
+    G = reconciliationMatrix(S, Cv)
+    P = mx(S, G)    #- projector
     yR = mx(P, yh) #- reconciliated forecasts
 
     #================= OUTPUT ==================

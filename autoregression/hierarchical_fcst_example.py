@@ -101,7 +101,7 @@ if __name__ == '__main__':
     curve_3 = getSales(df, 1, 3)
     curve_ttl = curve_1 + curve_2 + curve_3
     Nd = len(curve_1)
-    nPred = 39
+    nPred = 13
     W_option = 3
     cheat = True
 
@@ -148,11 +148,29 @@ if __name__ == '__main__':
 
 
     if cheat: #- "cheat with know true curves"
-        r1 = pred_1 - tail(curve_1, nPred)
-        r2 = pred_2 - tail(curve_2, nPred)
-        r3 = pred_3 - tail(curve_3, nPred)
-        r4 = pred_sum - tail(curve_ttl, nPred)
-        A = np.array([np.abs(r4),np.abs(r1),np.abs(r2),np.abs(r3)])
+        r1 = np.abs( pred_1 - tail(curve_1, nPred) )
+        r2 = np.abs( pred_2 - tail(curve_2, nPred) )
+        r3 = np.abs( pred_3 - tail(curve_3, nPred) )
+        r4 = np.abs( pred_sum - tail(curve_ttl, nPred) )
+
+        sae1, sae2, sae3, sae4 = np.sum(r1), np.sum(r2), np.sum(r3), np.sum(r4)
+
+        print('SUM ABS ERR (SAE) c1', sae1)
+        print('SUM ABS ERR (SAE) c2', sae2)
+        print('SUM ABS ERR (SAE) c3', sae3)
+        print('SUM ABS ERR (SAE) c4', sae4)
+
+        A = np.array([r4,r1,r2,r3])
+
+        if True:
+            plt.title('Difference from true')
+            plt.plot(r1, label='1 SAE=%f' % (sae1))
+            plt.plot(r2, label='2 SAE=%f' % (sae2))
+            plt.plot(r3, label='3 SAE=%f' % (sae3))
+            plt.plot(r4, label='4 (sum) SAE=%f' % (sae4))
+            plt.legend()
+            plt.show()
+
     else: 
         A = np.array([residual_sum[55:-1],residual_1[55:-1],residual_2[55:-1],residual_3[55:-1]])
 
@@ -182,7 +200,7 @@ if __name__ == '__main__':
     print('===== projector  P=SG ===== \n', P)
     
 
-    if False:
+    if True:
         plt.plot(residual_1, label='res 1')
         plt.plot(residual_2, label='res 2')
         plt.plot(residual_3, label='res 3')

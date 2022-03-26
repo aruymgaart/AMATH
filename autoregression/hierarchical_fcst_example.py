@@ -101,9 +101,9 @@ if __name__ == '__main__':
     curve_3 = getSales(df, 1, 3)
     curve_ttl = curve_1 + curve_2 + curve_3
     Nd = len(curve_1)
-    nPred = 26
+    nPred = 39
     W_option = 3
-    cheat = False
+    cheat = True
 
     #---- sum matrix S ----
     # there are 3 base forecasts
@@ -152,7 +152,7 @@ if __name__ == '__main__':
         r2 = pred_2 - tail(curve_2, nPred)
         r3 = pred_3 - tail(curve_3, nPred)
         r4 = pred_sum - tail(curve_ttl, nPred)
-        A = np.array([r4,r1,r2,r3])
+        A = np.array([np.abs(r4),np.abs(r1),np.abs(r2),np.abs(r3)])
     else: 
         A = np.array([residual_sum[55:-1],residual_1[55:-1],residual_2[55:-1],residual_3[55:-1]])
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         for k in range(4): Cv[k,k] = Cov[k,k]*1.0
     else:
          Cv = np.cov(A)
-    print('Cov matrix condition number (large means near singular and pseudoinverse should be used)', np.linalg.cond(Cv))
+    
    
     G = reconciliationMatrix(S, Cv)
     P = mx(S, G)    #- projector
@@ -177,6 +177,7 @@ if __name__ == '__main__':
     print(res_sum.summary())
     
     print('===== COV ===== \n', Cv)
+    print('Cov matrix condition number (large means near singular and pseudoinverse should be used)', np.linalg.cond(Cv))
     print('===== G ===== \n', G)
     print('===== projector  P=SG ===== \n', P)
     
@@ -205,16 +206,16 @@ if __name__ == '__main__':
     yr3 = yR[3][60:-1]
 
     print('===== top of hierarchy level ====')
-    print('MAPE sum_models', mape(true_sum[Lcrop-nPred-1:-1], sum_models[Lcrop-nPred-1:-1]) )
-    print('MAPE model_sum',  mape(true_sum[Lcrop-nPred-1:-1], model_sum[Lcrop-nPred-1:-1]) )
-    print('MAPE recon_sum',  mape(true_sum[Lcrop-nPred-1:-1], recon_sum[Lcrop-nPred-1:-1]) )
+    print('MAPE sum_models', mape( tail(true_sum, nPred), tail(sum_models, nPred) ) )
+    print('MAPE model_sum',  mape( tail(true_sum, nPred), tail(model_sum, nPred) ) )
+    print('MAPE recon_sum',  mape( tail(true_sum, nPred), tail(recon_sum, nPred) ) )
     print('===== base levels ====')
-    print('MAPE base curve 1 model',               mape(c1[Lcrop-nPred-1:-1], yh1[Lcrop-nPred-1:-1]))
-    print('MAPE base curve 1 model reconciliated', mape(c1[Lcrop-nPred-1:-1], yr1[Lcrop-nPred-1:-1]))
-    print('MAPE base curve 2 model',               mape(c2[Lcrop-nPred-1:-1], yh2[Lcrop-nPred-1:-1]))
-    print('MAPE base curve 2 model reconciliated', mape(c2[Lcrop-nPred-1:-1], yr2[Lcrop-nPred-1:-1]))
-    print('MAPE base curve 3 model',               mape(c3[Lcrop-nPred-1:-1], yh3[Lcrop-nPred-1:-1]))
-    print('MAPE base curve 3 model reconciliated', mape(c3[Lcrop-nPred-1:-1], yr3[Lcrop-nPred-1:-1]))
+    print('MAPE base curve 1 model',               mape( tail(c1, nPred), tail(yh1, nPred) ) )
+    print('MAPE base curve 1 model reconciliated', mape( tail(c1, nPred), tail(yr1, nPred) ) )
+    print('MAPE base curve 2 model',               mape( tail(c2, nPred), tail(yh2, nPred) ) )
+    print('MAPE base curve 2 model reconciliated', mape( tail(c2, nPred), tail(yr2, nPred) ) )
+    print('MAPE base curve 3 model',               mape( tail(c3, nPred), tail(yh3, nPred) ) )
+    print('MAPE base curve 3 model reconciliated', mape( tail(c3, nPred), tail(yr3, nPred) ) )
 
     fig, ax = plt.subplots(4,1)
     T = np.arange(len(curve_ttl))

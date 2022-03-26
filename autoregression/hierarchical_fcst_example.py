@@ -1,5 +1,6 @@
 # AP Ruymgaart 
 # Example hierarchical forecasting (see Hyndman et.al.)
+# NOTE: not yet working as expected
 import pandas as pd, numpy as np, sklearn
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima_model import ARIMA
@@ -56,7 +57,7 @@ if __name__ == '__main__':
     Nd = len(curve_1)
     nPred = 26
     W_option = 2
-    cheat = False
+    cheat = True
 
     #---- sum matrix S ----
     # there are 3 base forecasts
@@ -139,25 +140,31 @@ if __name__ == '__main__':
         plt.show()
 
     true_sum = curve_ttl[60:-1]
+    Lcrop = len(true_sum)
     sum_models = sum_base_models[60:-1]
     model_sum = yh[0][60:-1]
     recon_sum = yR[0][60:-1]
-
     c1 = curve_1[60:-1]
     c2 = curve_2[60:-1]
     c3 = curve_3[60:-1]
+    yh1 = yh[1][60:-1]
+    yh2 = yh[2][60:-1]
+    yh3 = yh[3][60:-1]
+    yr1 = yR[1][60:-1]
+    yr2 = yR[2][60:-1]
+    yr3 = yR[3][60:-1]
 
     print('===== top of hierarchy level ====')
-    print('MAPE sum_models', mape(true_sum, sum_models) )
-    print('MAPE model_sum', mape(true_sum, model_sum) )
-    print('MAPE recon_sum', mape(true_sum, recon_sum) )
+    print('MAPE sum_models', mape(true_sum[Lcrop-nPred-1:-1], sum_models[Lcrop-nPred-1:-1]) )
+    print('MAPE model_sum',  mape(true_sum[Lcrop-nPred-1:-1], model_sum[Lcrop-nPred-1:-1]) )
+    print('MAPE recon_sum',  mape(true_sum[Lcrop-nPred-1:-1], recon_sum[Lcrop-nPred-1:-1]) )
     print('===== base levels ====')
-    print('MAPE base curve 1 model', mape(c1, yh[1][60:-1]))
-    print('MAPE base curve 1 model reconciliated', mape(c1, yR[1][60:-1]))
-    print('MAPE base curve 2 model', mape(c2, yh[2][60:-1]))
-    print('MAPE base curve 2 model reconciliated', mape(c2, yR[2][60:-1]))
-    print('MAPE base curve 3 model', mape(c3, yh[3][60:-1]))
-    print('MAPE base curve 3 model reconciliated', mape(c3, yR[3][60:-1]))
+    print('MAPE base curve 1 model',               mape(c1[Lcrop-nPred-1:-1], yh1[Lcrop-nPred-1:-1]))
+    print('MAPE base curve 1 model reconciliated', mape(c1[Lcrop-nPred-1:-1], yr1[Lcrop-nPred-1:-1]))
+    print('MAPE base curve 2 model',               mape(c2[Lcrop-nPred-1:-1], yh2[Lcrop-nPred-1:-1]))
+    print('MAPE base curve 2 model reconciliated', mape(c2[Lcrop-nPred-1:-1], yr2[Lcrop-nPred-1:-1]))
+    print('MAPE base curve 3 model',               mape(c3[Lcrop-nPred-1:-1], yh3[Lcrop-nPred-1:-1]))
+    print('MAPE base curve 3 model reconciliated', mape(c3[Lcrop-nPred-1:-1], yr3[Lcrop-nPred-1:-1]))
 
     fig, ax = plt.subplots(4,1)
     T = np.arange(len(curve_ttl))
@@ -168,18 +175,18 @@ if __name__ == '__main__':
     ax[0].axvline(x=len(curve_ttl)-nPred, c='black')
 
     ax[1].plot(T[60:-1], c1, label='curve 1 true')
-    ax[1].plot(T[60:-1], yR[1][60:-1], label='curve 1 reconciliated')
-    ax[1].plot(T[60:-1], yh[1][60:-1], label='curve 1 model')
+    ax[1].plot(T[60:-1], yr1, label='curve 1 reconciliated')
+    ax[1].plot(T[60:-1], yh1, label='curve 1 model')
     ax[1].axvline(x=len(curve_ttl)-nPred, c='black')
 
     ax[2].plot(T[60:-1], c2, label='curve 2 true')
-    ax[2].plot(T[60:-1], yR[2][60:-1], label='curve 2 reconciliated')
-    ax[2].plot(T[60:-1], yh[2][60:-1], label='curve 2 model')
+    ax[2].plot(T[60:-1], yr2, label='curve 2 reconciliated')
+    ax[2].plot(T[60:-1], yh2, label='curve 2 model')
     ax[2].axvline(x=len(curve_ttl)-nPred, c='black')
 
     ax[3].plot(T[60:-1], c3, label='curve 3 true')
-    ax[3].plot(T[60:-1], yR[3][60:-1], label='curve 3 reconciliated')
-    ax[3].plot(T[60:-1], yh[3][60:-1], label='curve 3 model')
+    ax[3].plot(T[60:-1], yr3, label='curve 3 reconciliated')
+    ax[3].plot(T[60:-1], yh3, label='curve 3 model')
     ax[3].axvline(x=len(curve_ttl)-nPred, c='black')
 
     ax[0].legend(), ax[1].legend(), ax[2].legend(), ax[3].legend()

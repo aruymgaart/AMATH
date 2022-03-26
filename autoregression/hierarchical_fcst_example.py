@@ -1,10 +1,12 @@
 # AP Ruymgaart 
-# Example hierarchical forecasting
-import pandas as pd, numpy as np
+# Example hierarchical forecasting (see Hyndman et.al.)
+import pandas as pd, numpy as np, sklearn
 import matplotlib.pyplot as plt
 from statsmodels.tsa.arima_model import ARIMA
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-mx = np.matmul
+import sklearn.metrics
+from sklearn.metrics import mean_absolute_percentage_error
+mx, mape = np.matmul, mean_absolute_percentage_error
 '''
 see https://otexts.com/fpp2/reconciliation.html#reconciliation
 1) produce forecasts
@@ -46,7 +48,6 @@ if __name__ == '__main__':
         print('projector', mx(S,G))
         exit()
 
-
     df = pd.read_csv('walmart_sample_data/train.csv')
     curve_1 = getSales(df, 1, 1)
     curve_2 = getSales(df, 1, 2)
@@ -54,6 +55,8 @@ if __name__ == '__main__':
     curve_ttl = curve_1 + curve_2 + curve_3
     Nd = len(curve_1)
     nPred = 26
+    W_option = 2
+    cheat = False
 
     #---- sum matrix S ----
     # there are 3 base forecasts
@@ -94,42 +97,38 @@ if __name__ == '__main__':
     yh = np.array( [model_sum, model_1, model_2, model_3] )
 
 
-    if True:
-        A = np.array([residual_1[55:len(residual_1)],residual_2[55:len(residual_1)],residual_3[55:len(residual_1)],residual_sum[55:len(residual_1)]])
-    else:
-        res_1 = pred_1 - curve_1[Nd-nPred-1:-1]
-        res_2 = pred_2 - curve_2[Nd-nPred-1:-1]
-        res_3 = pred_3 - curve_3[Nd-nPred-1:-1]
-        res_4 = pred_sum - curve_ttl[Nd-nPred-1:-1]
-        A = np.array([res_1,res_2,res_3,res_4])
+    if cheat: #- "cheat with know true curves"
+        r1 = pred_1 - curve_1[Nd-nPred-1:-1]
+        r2 = pred_2 - curve_2[Nd-nPred-1:-1]
+        r3 = pred_3 - curve_3[Nd-nPred-1:-1]
+        r4 = pred_sum - curve_ttl[Nd-nPred-1:-1]
+        A = np.array([r4,r1,r2,r3])
+    else: 
+        A = np.array([residual_sum[55:-1],residual_1[55:-1],residual_2[55:-1],residual_3[55:-1]])
 
-    if False:
+    if W_option == 1:
+        Cv = np.eye(4)*2
+    elif W_option == 2:
         Cov = np.cov(A)
         Cv = np.zeros(Cov.shape)
         for k in range(4): Cv[k,k] = Cov[k,k]*1.0
     else:
-        Cv = np.eye(4)*2
-
-    if False: # G = (3x4)
-        G = Gp
-    elif False:
-        G = np.array([[0,1,0,0],[0,0,1,0],[0,0,0,1]])
-    else:
-        G = reconciliationMatrix(S,Cv)
+         Cv = np.cov(A)
+   
+    G = reconciliationMatrix(S,Cv)
+    P = mx(S,G)    #- projector
+    yR = mx(P, yh) #- reconciliated forecasts
 
     #================= OUTPUT ==================
     print(res_1.summary())
     print(res_2.summary())
     print(res_3.summary())
     print(res_sum.summary())
-    #- projector
-    P = mx(S,G)
-    print('COV', Cv)
-    #print('StWiS', StWiS)
-    print('G', G)
-    print('P', P)
-    #- reconciliated
-    yR = mx(P, yh)
+    
+    print('===== COV ===== \n', Cv)
+    print('===== G ===== \n', G)
+    print('===== projector  P=SG ===== \n', P)
+    
 
     if False:
         plt.plot(residual_1, label='res 1')
@@ -139,41 +138,50 @@ if __name__ == '__main__':
         plt.legend()
         plt.show()
 
+    true_sum = curve_ttl[60:-1]
+    sum_models = sum_base_models[60:-1]
+    model_sum = yh[0][60:-1]
+    recon_sum = yR[0][60:-1]
 
-    #plt.plot(p, label='ARIMA, order=(%d,%d,%d) predicted' % (2, 1, 0))
-    if False:
-        plt.plot(curve_1, label='True 1')
-        plt.plot(model_1, label='fit/fcst 1')
-        plt.plot(curve_2, label='True 2')
-        plt.plot(model_2, label='fit/fcst 2')
-        plt.plot(curve_3, label='True 3')
-        plt.plot(model_3, label='fit/fcst 3')
-    else:
-        pass
+    c1 = curve_1[60:-1]
+    c2 = curve_2[60:-1]
+    c3 = curve_3[60:-1]
+
+    print('===== top of hierarchy level ====')
+    print('MAPE sum_models', mape(true_sum, sum_models) )
+    print('MAPE model_sum', mape(true_sum, model_sum) )
+    print('MAPE recon_sum', mape(true_sum, recon_sum) )
+    print('===== base levels ====')
+    print('MAPE base curve 1 model', mape(c1, yh[1][60:-1]))
+    print('MAPE base curve 1 model reconciliated', mape(c1, yR[1][60:-1]))
+    print('MAPE base curve 2 model', mape(c2, yh[2][60:-1]))
+    print('MAPE base curve 2 model reconciliated', mape(c2, yR[2][60:-1]))
+    print('MAPE base curve 3 model', mape(c3, yh[3][60:-1]))
+    print('MAPE base curve 3 model reconciliated', mape(c3, yR[3][60:-1]))
 
     fig, ax = plt.subplots(4,1)
     T = np.arange(len(curve_ttl))
-    ax[0].plot(T[60:-1], curve_ttl[60:-1], label='True sum')
-    ax[0].plot(T[60:-1], sum_base_models[60:-1], label='sum of indiv base models')
-    ax[0].plot(T[60:-1], yh[0][60:-1], label='fit/fcst sum')
-    ax[0].plot(T[60:-1], yR[0][60:-1], label='reconciliated')
+    ax[0].plot(T[60:-1], true_sum, label='True sum')
+    ax[0].plot(T[60:-1], sum_models, label='sum of models')
+    ax[0].plot(T[60:-1], model_sum, label='model of sum')
+    ax[0].plot(T[60:-1], recon_sum, label='reconciliated')
     ax[0].axvline(x=len(curve_ttl)-nPred, c='black')
 
-    ax[1].plot(T[60:-1], curve_1[60:-1], label='curve 1 true')
+    ax[1].plot(T[60:-1], c1, label='curve 1 true')
     ax[1].plot(T[60:-1], yR[1][60:-1], label='curve 1 reconciliated')
     ax[1].plot(T[60:-1], yh[1][60:-1], label='curve 1 model')
     ax[1].axvline(x=len(curve_ttl)-nPred, c='black')
 
-    ax[2].plot(T[60:-1], curve_2[60:-1], label='curve 2 true')
+    ax[2].plot(T[60:-1], c2, label='curve 2 true')
     ax[2].plot(T[60:-1], yR[2][60:-1], label='curve 2 reconciliated')
     ax[2].plot(T[60:-1], yh[2][60:-1], label='curve 2 model')
     ax[2].axvline(x=len(curve_ttl)-nPred, c='black')
 
-    ax[3].plot(T[60:-1], curve_3[60:-1], label='curve 3 true')
+    ax[3].plot(T[60:-1], c3, label='curve 3 true')
     ax[3].plot(T[60:-1], yR[3][60:-1], label='curve 3 reconciliated')
     ax[3].plot(T[60:-1], yh[3][60:-1], label='curve 3 model')
     ax[3].axvline(x=len(curve_ttl)-nPred, c='black')
-    
+
     ax[0].legend(), ax[1].legend(), ax[2].legend(), ax[3].legend()
     plt.show()
 
